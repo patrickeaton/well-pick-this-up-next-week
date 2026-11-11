@@ -949,6 +949,14 @@ export function mountUI(ctl: Controller, spriteUrl: (key: string) => string): vo
     </div>`;
   }
 
+  /** "Version 0.2.0 · build 6ada675 · 11 Nov 2026", to check which build you're on. */
+  function versionText(): string {
+    // Defined at build time; a dev server started before vite.config.ts changed won't have them.
+    if (typeof __APP_VERSION__ === 'undefined') return 'Version: dev build';
+    const built = new Date(__APP_BUILT__).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    return `Version ${__APP_VERSION__} · build ${__APP_COMMIT__} · ${built}`;
+  }
+
   function settingsHtml(): string {
     return `
       <div class="card settings">
@@ -968,6 +976,7 @@ export function mountUI(ctl: Controller, spriteUrl: (key: string) => string): vo
           <div><b>Reset save</b><p class="muted small">Forget every page, roll, taste, friendship, ending and achievement. Settings are kept.</p></div>
           <button class="danger-btn" data-act="reset">Reset save</button>
         </div>
+        <p class="version">${versionText()}</p>
       </div>`;
   }
 

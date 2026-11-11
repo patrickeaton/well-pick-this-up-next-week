@@ -1042,3 +1042,6 @@ body { touch-action: manipulation; }
 .notice-hearts { color: #e5665c; letter-spacing: 1px; }
 .notice-hearts .empty { color: #4d3a3e; }
 @keyframes notice-in { from { opacity: 0; transform: translateX(24px); } }
+
+/* Which build this is, at the bottom of Settings. */
+.version { margin: 14px 0 0; text-align: center; font-size: 12px; color: var(--muted); opacity: .8; letter-spacing: .2px; }

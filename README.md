@@ -33,3 +33,7 @@ In dev mode, type `dev.help()` in the browser console for testing shortcuts
 Every push to `main` builds the game and publishes it to GitHub Pages
 (`.github/workflows/deploy.yml`). One-time setup: in the repo's
 **Settings → Pages**, set **Source** to **GitHub Actions**.
+
+The version comes from `package.json`. The bottom of the in-game Settings
+shows the version, the commit it was built from, and the build date, so you
+can check you're not on an old copy.
