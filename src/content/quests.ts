@@ -53,7 +53,10 @@ export const QUESTS: QuestDef[] = [
         title: 'Get the bell from the mimic',
         routes: [
           { any: ['chest:open:charmed'], label: 'Open the chest with an exact 13' },
-          { any: ['chest:ham'], label: 'Toss the mimic a ham' },
+          { any: ['chest:ham'], label: 'Feed it the ham' },
+          { any: ['chest:sausages'], label: 'Feed it the sausages' },
+          { any: ['chest:fish'], label: 'Feed it a fish' },
+          { any: ['chest:openHappy:charmed'], label: 'Give it a treat, then open it' },
         ],
       },
       {
@@ -224,7 +227,8 @@ export const QUESTS: QuestDef[] = [
     blurb: 'Someone tried to ring that bell a long, long time ago.',
     steps: [
       { title: "Find G.'s d20", routes: [{ any: ['skeleton:die'], label: "Take the skeleton's d20 in the cellar" }] },
-      { title: 'Lay it to rest', routes: [{ any: ['gGrave:bury'], label: "Bury it in G.'s grave" }] },
+      { title: 'Find out who G. was', routes: [{ any: ['ending:good'], label: 'Wake the town; Sister Wren leaves you a note' }] },
+      { title: 'Lay it to rest', routes: [{ any: ['gGrave:bury>cryptOpen'], label: "Bury it in G.'s grave" }] },
       { title: 'Into the crypt', routes: [{ any: ['crypt:enter'], label: 'Go down into the crypt' }] },
       { title: 'Let him finish', routes: [{ any: ['ending:secret'], label: 'Give G. the bell' }] },
     ],

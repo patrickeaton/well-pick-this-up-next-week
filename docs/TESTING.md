@@ -96,7 +96,8 @@ night, never every route.
 | | Force the door (roll 17+) | `dev.go('inn')`, click the cellar door |
 | | Coal chute (roll 8+) | `dev.go('square')`, the chute by the inn |
 | Get the bell | Exact 13 on the chest | `dev.go('cellar')`, open the chest, `dev.roll(13)` |
-| | Toss the ham | `dev.give('ham'); dev.go('cellar')` |
+| | Feed it meat (ham, sausages, fish) | `dev.give('sausages'); dev.go('cellar')` |
+| | A treat, then open it (7–15) | `dev.give('pie'); dev.go('cellar')` |
 | | Amulet: choose 13 | Go back to sleep as your very first action in a session |
 | Into the Close | Bolt cutters | `dev.go('smithy')` → tool wall, then the gate in the square |
 | | Captain's key | `dev.go('guardhouse')` → tackle the recruit (8+) → key rack |

@@ -375,7 +375,7 @@ wake everyone. (It mirrors the real table: everyone is falling asleep.)
 | Step | Routes |
 | --- | --- |
 | Into the cellar | Iron key (fireplace ashes) · force the door (roll) · coal chute from the square (roll) |
-| Get the bell | Exact 13 on the chest · amulet (choose a 13, or take the path once you've seen it) · toss it the butcher's ham |
+| Get the bell | Exact 13 on the chest · amulet (choose a 13, or take the path once you've seen it) · feed it meat: the butcher's ham, sausages from Market Street, or a fish from the pond (works even after it's snapped shut) · feed it a treat (bread or a pie from the bakery, an apple from the square's fruit stall) and it's happy: opening it then needs 7–15 instead of 13 |
 | Into the Tower Close | Bolt cutters (smithy) · the captain's key (guardhouse, past the recruit) · pick the padlock (roll; a snapped pick jams it for the night) |
 | Past the moth swarm | Wave a light at it (lantern, coal, candle) · fight it (roll) |
 | Into the tower | Wren's key (show her the bell) · Vex's key (after the bad ending) · the hidden service door · climb the wall (roll; lands above the next two) |

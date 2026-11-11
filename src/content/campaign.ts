@@ -564,6 +564,15 @@ export const CHECKS: Record<string, CheckDef> = {
       { from: 14, to: 20, id: 'snap', label: 'It snaps shut for the night' },
     ],
   },
+  chestHappy: {
+    id: 'chestHappy',
+    name: 'Open the chest (it\'s in a good mood)',
+    bands: [
+      { from: 1, to: 6, id: 'eaten', label: 'It eats you anyway' },
+      { from: 7, to: 15, id: 'charmed', label: 'The mimic purrs open' },
+      { from: 16, to: 20, id: 'snap', label: 'Too excited: it snaps shut' },
+    ],
+  },
   chute: {
     id: 'chute',
     name: 'Squeeze down the coal chute',
@@ -981,6 +990,10 @@ export const ENDINGS: Record<EndingId, { title: string; page: string | null }> =
 export const INVENTORY: { flag: string; icon: string; name: string; hint: string; hideIf?: string }[] = [
   { flag: 'key', icon: 'key', name: 'Iron cellar key', hint: 'Heavy and old. There was a locked door behind the bar.' },
   { flag: 'ham', icon: 'kebab_dining', name: 'Stolen ham', hideIf: 'hamUsed', hint: "Something in the inn's cellar is very hungry." },
+  { flag: 'sausages', icon: 'set_meal', name: 'A string of sausages', hint: "A whole string. Something in the inn's cellar would go mad for these." },
+  { flag: 'fish', icon: 'phishing', name: 'A fish', hint: 'Still flapping a bit. Somebody with an appetite (and a lid) might like it.' },
+  { flag: 'pie', icon: 'cake', name: 'A cooling pie', hint: "Still warm. Not meat, but it'd put anything in a good mood." },
+  { flag: 'apple', icon: 'nutrition', name: 'A shiny apple', hint: 'Crisp. A nice treat for something that bites.' },
   { flag: 'wellWater', icon: 'water_drop', name: 'Flask of well water', hideIf: 'blessed', hint: 'Clean, cold, and the start of holy water. Someone at the chapel would know.' },
   { flag: 'bell', icon: 'notifications', name: 'Bell of Harrowmere', hideIf: 'blessed', hint: "It wants ringing from the tower. Unblessed, though, it won't end well." },
   { flag: 'blessed', icon: 'notifications_active', name: 'Bell of Harrowmere (blessed)', hint: 'Ready. Hang it in the belfry and ring it.' },
@@ -990,7 +1003,7 @@ export const INVENTORY: { flag: string; icon: string; name: string; hint: string
   { flag: 'coal', icon: 'local_fire_department', name: 'A hot coal in a tin', hint: 'Still glowing. Good for burning things, or scaring things off.' },
   { flag: 'candle', icon: 'flare', name: 'A chapel candle', hint: 'It never seems to go out. Silk burns, you know.' },
   { flag: 'plank', icon: 'carpenter', name: 'A sturdy plank', hideIf: 'gapBridged', hint: 'Long enough to bridge a gap. The tower stair has a rotten landing.' },
-  { flag: 'bread', icon: 'bakery_dining', name: 'A loaf of bread', hint: 'Warm. Somebody at the mill pond is very fond of bread.' },
+  { flag: 'bread', icon: 'bakery_dining', name: 'A loaf of bread', hint: 'Warm. Somebody at the mill pond is very fond of bread. (Something in the cellar quite likes it too.)' },
   { flag: 'crank', icon: 'construction', name: 'An iron crank', hideIf: 'wheelStopped', hint: 'Tagged MILL, SLUICE. It fits a square socket somewhere by the water.' },
   { flag: 'millKey', icon: 'key', name: 'The mill key', hideIf: 'millOpen', hint: 'Brass, on a bit of red string. The mill door, surely.' },
   { flag: 'revival', icon: 'science', name: "Miller's Revival", hint: 'For the deepest sleepers. One sniff. Who sleeps deepest of all?' },
@@ -1319,6 +1332,69 @@ function roadExit(
   }));
 }
 
+/** Opening the mimic chest, by luck (or a good mood). */
+function openChest(g: Ctx, outcome?: string): void {
+  if (outcome === 'charmed') {
+    g.say('The chest shivers… and purrs. The lid swings open. Inside, wrapped in sacking: a small bronze bell, humming faintly. The Bell of Harrowmere.', 'dm');
+    g.setFlag('bell');
+  } else if (outcome === 'snap') {
+    g.say('The lid snaps shut so hard the bolts rattle. It will not open again tonight. (Not for you, anyway. Maybe for something tasty.)', 'dm');
+    g.setFlag('chestShut');
+  } else {
+    g.achieve('eaten');
+    g.endSession('The chest grows teeth and swallows you whole. Marcus, grinning: "That\'s… actually a great place to stop."');
+  }
+}
+
+/**
+ * Food for the mimic. It's a meat-eater: meat opens it on the spot (even if
+ * it snapped shut earlier). Anything else it eats happily but keeps the lid
+ * down; it's in a good mood, though, which makes opening it much easier.
+ */
+interface MimicFood { flag: string; used?: string; name: string; meat: boolean; line: string; quip: [Speaker, string] }
+const MIMIC_FOOD: MimicFood[] = [
+  { flag: 'ham', used: 'hamUsed', name: 'the ham', meat: true,
+    line: 'The lid flies open, the ham vanishes with a crunch, and the chest makes a happy little burp.',
+    quip: ['dan', "I can't believe the ham worked."] },
+  { flag: 'sausages', name: 'the sausages', meat: true,
+    line: 'You dangle the sausages. A long tongue unrolls from under the lid and slurps them down like spaghetti. The lid falls open with a contented sigh.',
+    quip: ['priya', 'That is the most disgusting thing I have ever seen. Again.'] },
+  { flag: 'fish', name: 'the fish', meat: true,
+    line: 'The chest catches the fish mid-air, bones and all. It purrs like a cat with a whole pond to itself, and the lid swings open.',
+    quip: ['jo', "It's a cat. The chest is a cat."] },
+  { flag: 'bread', name: 'the bread', meat: false,
+    line: 'The chest gulps the loaf, chews thoughtfully, and stays shut. But it\'s humming now. It seems… pleased with you.',
+    quip: ['dm', 'Marcus: "It\'s a carnivore, but it\'s not a monster."'] },
+  { flag: 'pie', name: 'the pie', meat: false,
+    line: 'The pie disappears, dish and all. The chest stays shut, but it rocks gently from side to side, the way a dog wags.',
+    quip: ['dan', "Aw. It's happy."] },
+  { flag: 'apple', name: 'the apple', meat: false,
+    line: 'Crunch. The chest considers the apple, decides it was fine, and settles down with a satisfied little rattle. Still shut. But friendlier.',
+    quip: ['jo', 'Healthy snacks! For the monster!'] },
+];
+function feedMimic(food: MimicFood): ActionDef {
+  return {
+    id: food.flag,
+    label: `Feed it ${food.name}`,
+    minutes: 5,
+    when: (g) => g.flag(food.flag) && !(food.used && g.flag(food.used)) && !g.flag('bell') && (food.meat || !g.flag('mimicHappy')),
+    run: (g) => {
+      g.say(food.line, 'dm');
+      if (food.used) g.setFlag(food.used);
+      else g.clearFlag(food.flag);
+      if (food.meat) {
+        g.say('While it chews, you reach in and grab a small bronze bell. The Bell of Harrowmere.', 'dm');
+        g.setFlag('bell');
+        g.achieve('ham');
+      } else {
+        g.setFlag('mimicHappy');
+        g.say('(The mimic is in a good mood. Opening it should be a lot less bitey now.)', 'system');
+      }
+      g.say(food.quip[1], food.quip[0]);
+    },
+  };
+}
+
 const BAR_LINES: [string, ...LookLine[]] = [
   'The bar is sticky in a way that suggests history.',
   'Someone has carved "BRAM SMELLS" into the wood. Then crossed it out. Then carved it again, bigger.',
@@ -1396,7 +1472,6 @@ const DECOR: ObjectDef[] = [
   decor('cellar', 5, 1, 'jars'),
   decor('cellar', 10, 1, 'sconce'),
   // Town square: guards at the tower gate, stalls, alley clutter
-  decor('square', 9, 8, 'fruitStall'),
   decor('square', 6, 8, 'flowerCart'),
   decor('square', 7, 5, 'flowers', true),
   decor('square', 9, 7, 'flowers', true),
@@ -1439,7 +1514,6 @@ const DECOR: ObjectDef[] = [
   decor('belfry', 12, 3, 'sconce'),
   decor('belfry', 6, 8, 'crate'),
   // Market street: closed stalls, barrels, crates, a sleeping cat in the alley
-  decor('market', 2, 4, 'closedStall'),
   decor('market', 4, 5, 'closedStall'),
   decor('market', 13, 3, 'closedStall'),
   decor('market', 16, 3, 'barrel'),
@@ -1684,7 +1758,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Bram',
-        minutes: 15,
+        minutes: 10,
         talk: true,
         run: (g) => {
           g.say('"Whole town\'s asleep. Just dropped, mid-step. Me? I\'ve had insomnia for thirty years, so." He shrugs. "Lost the cellar key too, while we\'re listing problems. Night it went missing, Fen was singing by the fire."', 'dm');
@@ -1694,7 +1768,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'fire',
         label: 'Ask about the fire',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('metBram') && !g.flag('heardAshes'),
         run: (g) => {
@@ -1705,7 +1779,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'cellar',
         label: 'Ask about the cellar',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('metBram'),
         run: (g) => g.say('"Old junk down there. Grandma\'s things. And a chest I don\'t touch. It bit my cousin."', 'dm'),
@@ -1713,7 +1787,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'tower',
         label: 'Ask about the bell tower',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('metBram'),
         run: (g) => g.say('"Big moth thing moved into the tower and everyone dropped where they stood. Sister Wren up at the chapel\'s still awake. She\'d know more. Holy people sleep weird."', 'dm'),
@@ -1803,14 +1877,14 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'chat',
         label: 'Chat with Fen',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         run: (g) => g.say('Fen eyes your lute. "Another bard. Wonderful." They retune, pointedly. "I only sing for people who ask nicely. And mean it."', 'dm'),
       },
       {
         id: 'sing',
         label: 'Ask Fen to sing',
-        minutes: 15,
+        minutes: 10,
         talk: true,
         check: 'fenSing',
         when: (g) => !g.flag('fenAsked'),
@@ -2022,40 +2096,25 @@ export const OBJECTS: ObjectDef[] = [
         label: 'Inspect the chest',
         minutes: 3,
         look: true,
-        run: (g) => g.say('Brass bands. A keyhole that seems to… breathe? You count the bolts: thirteen. You hear a faint, hungry gurgle.', 'dm'),
+        run: (g) => g.say('Brass bands. A keyhole that seems to… breathe? You count the bolts: thirteen. There are teeth marks round the lid, and a crumb of sausage stuck in the hinge. You hear a faint, hungry gurgle.', 'dm'),
       },
       {
         id: 'open',
         label: 'Open the chest',
         minutes: 10,
         check: 'chest',
-        when: (g) => !g.flag('chestShut') && !g.flag('bell'),
-        run: (g, outcome) => {
-          if (outcome === 'charmed') {
-            g.say('The chest shivers… and purrs. The lid swings open. Inside, wrapped in sacking: a small bronze bell, humming faintly. The Bell of Harrowmere.', 'dm');
-            g.setFlag('bell');
-          } else if (outcome === 'snap') {
-            g.say('The lid snaps shut so hard the bolts rattle. It will not open again tonight.', 'dm');
-            g.setFlag('chestShut');
-          } else {
-            g.achieve('eaten');
-            g.endSession('The chest grows teeth and swallows you whole. Marcus, grinning: "That\'s… actually a great place to stop."');
-          }
-        },
+        when: (g) => !g.flag('chestShut') && !g.flag('bell') && !g.flag('mimicHappy'),
+        run: openChest,
       },
       {
-        id: 'ham',
-        label: 'Toss the ham to the chest',
-        minutes: 5,
-        when: (g) => g.flag('ham') && !g.flag('hamUsed') && !g.flag('bell'),
-        run: (g) => {
-          g.say('The lid flies open, the ham vanishes with a crunch, and the chest makes a happy little burp. While it chews, you reach in and grab a small bronze bell. The Bell of Harrowmere.', 'dm');
-          g.say("I can't believe the ham worked.", 'dan');
-          g.setFlag('hamUsed');
-          g.setFlag('bell');
-          g.achieve('ham');
-        },
+        id: 'openHappy',
+        label: 'Open the chest while it\'s happy',
+        minutes: 10,
+        check: 'chestHappy',
+        when: (g) => !g.flag('chestShut') && !g.flag('bell') && g.flag('mimicHappy'),
+        run: openChest,
       },
+      ...MIMIC_FOOD.map(feedMimic),
     ],
   },
 
@@ -2064,6 +2123,29 @@ export const OBJECTS: ObjectDef[] = [
     'A signpost with arms pointing every which way. ↑ HALL STREET (the town hall, and a mill pond past it). ← THE CHAPEL (and the town gate past it). ↓ MARKET STREET (either alley), then WASHING LANE further east. → THE TOWER CLOSE (sealed by the Watch).',
     'Someone has added a tiny arm pointing straight down that just says "SNACKS". It points at nothing.',
   ]),
+  {
+    id: 'fruitStall',
+    name: 'Fruit stall',
+    area: 'square',
+    x: 9,
+    y: 8,
+    sprite: 'fruitStall',
+    blurb: 'A fruit stall, apples piled in a perfect pyramid. Nobody minding it.',
+    actions: [
+      {
+        id: 'apple',
+        label: 'Take an apple',
+        minutes: 2,
+        steal: true,
+        when: (g) => !g.flag('apple'),
+        run: (g) => {
+          g.say('You take one from the bottom of the pyramid. Somehow, it holds.', 'dm');
+          g.say('Respect.', 'priya');
+          g.setFlag('apple');
+        },
+      },
+    ],
+  },
   look('dozeGuardN', 'Dozing guard', 'square', 15, 4, 'sleeperGuard', [
     'A guard asleep at his post by the Close gate, chin resting on his spear.',
   ]),
@@ -2200,7 +2282,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Vex',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         run: (g) => {
           g.say('"Ah, a fellow insomniac! I deal in curiosities. Bells, mainly. Well. One bell, specifically." He slides a price list across the counter.', 'dm');
@@ -2223,7 +2305,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'confront',
         label: 'Confront Vex about the Warden',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.hasPage('vexReceipt') && !g.flag('towerKey'),
         run: (g) => {
@@ -2353,7 +2435,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Sister Wren',
-        minutes: 15,
+        minutes: 10,
         talk: true,
         run: (g) => {
           g.say('"You\'re awake too! Thank goodness. It\'s the Long Sleep. The Night Warden roosts in our bell tower, and the whole town dropped where they stood."', 'dm');
@@ -2364,7 +2446,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'show',
         label: 'Show Wren the bell',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('bell') && !g.flag('towerKey'),
         run: (g) => {
@@ -2375,7 +2457,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'bless',
         label: 'Ask Wren to bless the bell',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('bell') && !g.flag('blessed'),
         run: (g) => {
@@ -2390,7 +2472,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'grave',
         label: 'Ask about the empty grave',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.hasPage('wrenNote'),
         run: (g) => g.say('"G.\'s grave. He tried to ring the bell centuries ago, and never made it. Some say he\'s still trying. Some nights I hear dice rattling in the crypt."', 'dm'),
@@ -2429,7 +2511,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'sorry',
         label: 'Apologize to Fen',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => !g.flag('fenForgave'),
         run: (g) => {
@@ -2485,7 +2567,7 @@ export const OBJECTS: ObjectDef[] = [
         when: (g) => g.flag('gDie') && !g.flag('cryptOpen'),
         run: (g) => {
           if (!g.hasPage('wrenNote')) {
-            g.say('You set the d20 in the hollow. Nothing happens. It doesn\'t feel right yet. You don\'t know who G. was.', 'dm');
+            g.say('You set the d20 in the hollow. Nothing happens. It doesn\'t feel right yet: you don\'t even know who G. was. Sister Wren tends these graves. Maybe once the town is awake, she\'d tell you.', 'dm');
             return;
           }
           g.say('You set the d20 in the hollow and push the dirt over it. Somewhere behind you, a stone door grinds open.', 'dm');
@@ -2528,7 +2610,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talkG',
         label: 'Talk to G.',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         when: (g) => g.flag('metG') && !g.flag('bell'),
         run: (g) => g.say('"The bell. It\'s in the Lantern cellar, in the chest with the teeth. Bring it to me and I\'ll ring it myself."', 'dm'),
@@ -3195,7 +3277,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Pip',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         run: (g) => {
           g.say('"Climbed that bell tower twice, I have. Got in on a twelve. Fell in the hedge on an eleven. That\'s how they caught me."', 'dm');
@@ -3357,7 +3439,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Sergeant Holt',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         run: (g) => {
           g.say('"The sleep started the night that moth thing landed on the bell tower. Travellers outside dropped in the ditch. So: nobody in, nobody out."', 'dm');
@@ -3367,7 +3449,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'bluff',
         label: 'Talk your way past him',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         check: 'bluff',
         when: (g) => !g.flag('holtTried'),
@@ -3419,7 +3501,7 @@ export const OBJECTS: ObjectDef[] = [
       {
         id: 'talk',
         label: 'Talk to Cousin Ned',
-        minutes: 10,
+        minutes: 5,
         talk: true,
         run: (g) => {
           g.say('"Insomnia runs in the family. Like the biting, apparently." He waves the bandage. "That chest in Bram\'s cellar. I opened it on a seven and it took a chunk out of me."', 'dm');
@@ -3607,6 +3689,29 @@ export const OBJECTS: ObjectDef[] = [
   look('alleyCat', 'Alley cat', 'market', 6, 8, 'cat', [
     'A scruffy cat asleep on a crate at the end of the alley.',
   ]),
+  {
+    id: 'sausageStall',
+    name: 'Sausage stall',
+    area: 'market',
+    x: 2,
+    y: 4,
+    sprite: 'closedStall',
+    blurb: 'A shuttered stall. Through a gap in the shutters, a string of sausages hangs from a nail.',
+    actions: [
+      {
+        id: 'sausages',
+        label: 'Take the sausages',
+        minutes: 3,
+        steal: true,
+        when: (g) => !g.flag('sausages') && !g.flag('bell'),
+        run: (g) => {
+          g.say('You work the sausages out through the gap. They come out in one long, magnificent string.', 'dm');
+          g.say('I would like it noted that Grukk is drooling.', 'dan');
+          g.setFlag('sausages');
+        },
+      },
+    ],
+  },
   look('lockedHouse', 'Locked house', 'market', 16, 2, 'door', [
     'A narrow house. The door is locked.',
     'You knock. From inside: loud, contented snoring.',
@@ -3963,6 +4068,28 @@ OBJECTS.find((o) => o.id === 'scarecrow')?.actions.push({
   },
 });
 
+OBJECTS.find((o) => o.id === 'breadRack')?.actions.push({
+  id: 'pie',
+  label: 'Take a cooling pie',
+  minutes: 2,
+  steal: true,
+  when: (g) => !g.flag('pie'),
+  run: (g) => {
+    g.say('A pie, still steaming, from the end of the rack. Apple, by the smell. You wrap it in a cloth.', 'dm');
+    g.setFlag('pie');
+  },
+});
+OBJECTS.find((o) => o.id === 'fisher')?.actions.push({
+  id: 'fish',
+  label: 'Take a fish from his bucket',
+  minutes: 2,
+  steal: true,
+  when: (g) => !g.flag('fish') && !g.flag('bell'),
+  run: (g) => {
+    g.say('You lift a fat, slippery fish out of his bucket. He mutters "that\'s the big one" in his sleep.', 'dm');
+    g.setFlag('fish');
+  },
+});
 OBJECTS.find((o) => o.id === 'breadRack')?.actions.push({
   id: 'loaf',
   label: 'Take a loaf',
