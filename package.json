@@ -1,4 +1,19 @@
 {
   "name": "adventure-game",
-  "packageManager": "yarn@4.6.0"
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@4.6.0",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.90.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^6.4.6"
+  }
 }

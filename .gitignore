@@ -11,3 +11,7 @@
 
 #!.yarn/cache
 .pnp.*
+
+# Build output
+dist
+node_modules
