@@ -444,8 +444,25 @@ export class Controller {
     if (!s || s.ended || this.pendingRoll) return;
     const obj = OBJECTS.find((o) => o.id === objectId);
     if (!obj || !this.isHere(obj) || !this.clickable(obj)) return;
+    // Across a gap (or otherwise cut off): say so, rather than open its actions.
+    if (!this.canReach(obj)) {
+      const from = s.log.length;
+      this.log(`You can't reach the ${obj.name.toLowerCase()} from here.`, 'system');
+      s.dialog = { objectId: null, from };
+      this.emit('change');
+      return;
+    }
     s.dialog = null;
     this.startWalk({ path: this.pathNextTo(obj), objectId });
+  }
+
+  /** Can you walk to (or right next to) this object from where you're standing? */
+  canReach(obj: ObjectDef): boolean {
+    const s = this.session;
+    if (!s) return false;
+    const found = search(this.grid(s.area), s.pos);
+    const near = (t: Tile) => (t.x === obj.x && t.y === obj.y) || DIRS.some(([dx, dy]) => t.x + dx === obj.x && t.y + dy === obj.y);
+    return near(s.pos) || found.order.some(near);
   }
 
   /** Click on empty floor: walk there. */
@@ -540,7 +557,7 @@ export class Controller {
     if (!s || s.ended || this.pendingRoll) return;
     const obj = OBJECTS.find((o) => o.id === objectId);
     const action = obj?.actions.find((a) => a.id === actionId);
-    if (!obj || !action || !this.isHere(obj) || !this.availableActions(obj).includes(action)) return;
+    if (!obj || !action || !this.isHere(obj) || !this.canReach(obj) || !this.availableActions(obj).includes(action)) return;
 
     const first = s.actionsTaken === 0;
     if (action.check) {

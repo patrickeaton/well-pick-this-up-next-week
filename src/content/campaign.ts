@@ -3642,16 +3642,28 @@ export const OBJECTS: ObjectDef[] = [
         label: 'Jump the gap',
         minutes: 5,
         check: 'jump',
-        when: (g) => !g.flag('gapBridged') && !g.flag('fellOnce') && !g.flag('aboveGap'),
+        // Try as often as you like (from either side); every fall costs the climb back up.
+        when: (g) => !g.flag('gapBridged'),
         run: (g, outcome) => {
           if (outcome === 'across') {
-            g.say('You take a run up and leap. You land, wobble, and grab the rail. Made it.', 'dm');
-            g.setFlag('aboveGap');
-            g.goTo('stairs', 8, 3);
+            if (g.flag('aboveGap')) {
+              g.say('You take a run down the steps and leap back over the gap. You land, wobble, and grab the rail. Made it.', 'dm');
+              g.clearFlag('aboveGap');
+              g.goTo('stairs', 8, 5);
+            } else {
+              g.say('You take a run up and leap. You land, wobble, and grab the rail. Made it.', 'dm');
+              g.setFlag('aboveGap');
+              g.goTo('stairs', 8, 3);
+            }
           } else {
-            g.say('You jump. You do not make it. You land in a heap at the bottom of the tower, bruised and very dusty.', 'dm');
-            g.say('Marcus: "You take… let\'s say a lot of damage. You\'re fine. Ish."', 'dm');
+            g.say(g.flag('fellOnce')
+              ? 'You jump. Again. You land in a heap at the bottom of the tower. Again.'
+              : 'You jump. You do not make it. You land in a heap at the bottom of the tower, bruised and very dusty.', 'dm');
+            g.say(g.flag('fellOnce')
+              ? 'Marcus: "Same heap as last time. It\'s getting a dent in it."'
+              : 'Marcus: "You take… let\'s say a lot of damage. You\'re fine. Ish."', 'dm');
             g.setFlag('fellOnce');
+            g.clearFlag('aboveGap');
             g.goTo('tower', 8, 2);
           }
         },

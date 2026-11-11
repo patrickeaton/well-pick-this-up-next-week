@@ -799,11 +799,27 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xf39c12, 6, 7, 4, 6);
     rect(g, 0xf7dc6f, 7, 10, 2, 3);
   });
-  make(scene, 'counter', (g) => {
-    rect(g, 0x5a3a22, 2, 0, 12, 16);
-    rect(g, 0x9a6a3c, 3, 0, 10, 16);
-    rect(g, 0xb8834f, 4, 0, 1, 16);
-  });
+  // The bar: a polished wooden top with a lip, tiling top to bottom.
+  make(scene, 'counter', (g) => pixels(g, [
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWwwWWWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWWWWWwWldK',
+      'KdLWwwWWWWWWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWWWwwWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWwWWWWWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWWWWwwWldK',
+      'KdLWwWWWWWWWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWwwWWWWldK',
+      'KdLWWWWWWWWWWldK',
+      'KdLWWWWWWWWwWldK',
+    ], {
+    K: 0x2a1a10, d: 0x5a3a22, L: 0xb8845a, W: 0x9c6b40, w: 0x7d5030, l: 0x7a4b2a,
+  }));
   make(scene, 'table', (g) => {
     rect(g, 0x5a3a22, 2, 3, 12, 10);
     rect(g, 0x9a6a3c, 3, 3, 10, 8);
@@ -823,9 +839,16 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0x5a3a22, 3, 9, 10, 1);
     rect(g, 0xb0b0b0, 7, 10, 2, 2);
   });
+  // Stone stairs going down: four steps, each with a lit tread and a dark riser.
   make(scene, 'stairs', (g) => {
-    const shades = [0x9a9ca6, 0x868892, 0x72747e, 0x5e606a, 0x4b4d57];
-    shades.forEach((c, i) => rect(g, c, 2, 1 + i * 3, 12, 3));
+    const tread = [0xa8a4ae, 0x8a868c, 0x6e6a74, 0x55505a];
+    for (let i = 0; i < 4; i++) {
+      rect(g, tread[i], 2, i * 4, 12, 3);
+      rect(g, i === 0 ? 0xc4c0ca : tread[i - 1], 2, i * 4, 12, 1);
+      rect(g, 0x2a2630, 2, i * 4 + 3, 12, 1);
+    }
+    rect(g, 0x2a2630, 0, 0, 2, 16); rect(g, 0x4a464e, 1, 0, 1, 16);
+    rect(g, 0x2a2630, 14, 0, 2, 16); rect(g, 0x3a3640, 14, 0, 1, 16);
   });
   // A wooden crate: lighter top face, framed front, planks, a diagonal brace, nails.
   make(scene, 'crate', (g) => {
@@ -934,22 +957,46 @@ export function makeTextures(scene: Phaser.Scene): void {
   });
 
   // Filler: cellar
+  // A wine rack: a wooden lattice full of bottle ends.
   make(scene, 'wineRack', (g) => {
-    rect(g, 0x4a2e1a, 1, 1, 14, 14);
-    for (const x of [3, 7, 11]) for (const y of [3, 7, 11]) {
-      rect(g, 0x24161a, x - 1, y - 1, 4, 4);
-      if ((x + y) % 3 !== 0) rect(g, 0x5e1a2a, x, y, 2, 2);
+    rect(g, 0x2a1a10, 0, 0, 16, 16);
+    rect(g, 0x6b4426, 1, 1, 14, 14);
+    const bottle = [0x2e5a34, 0x8e2b2b, 0x2e5a34, 0x5a2a4a];
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 4; col++) {
+        const x = 2 + col * 3 + (row % 2);
+        const y = 2 + row * 4;
+        rect(g, 0x3a2516, x - 1, y - 1, 4, 4);
+        rect(g, bottle[(row + col) % bottle.length], x, y, 2, 2);
+        rect(g, 0xd8e8c0, x, y, 1, 1);
+      }
     }
+    rect(g, 0x8a5a33, 1, 1, 14, 1);
   });
+  // A corner cobweb: threads from the corner, rings across them, one tiny spider.
   make(scene, 'cobweb', (g) => {
-    const silk = 0xd8d8e0;
-    for (let i = 0; i < 11; i++) rect(g, silk, i, i, 1, 1);
-    rect(g, silk, 0, 0, 1, 12);
-    rect(g, silk, 0, 0, 12, 1);
-    rect(g, silk, 0, 5, 5, 1);
-    rect(g, silk, 5, 0, 1, 5);
-    rect(g, silk, 0, 9, 9, 1);
-    rect(g, silk, 9, 0, 1, 9);
+    // Plot each pixel once so the threads stay one pixel thin.
+    const done = new Set<string>();
+    const dot = (x: number, y: number, c: number) => {
+      const px = Math.round(x), py = Math.round(y);
+      if (px < 0 || py < 0 || px > 15 || py > 15 || done.has(`${px},${py}`)) return;
+      done.add(`${px},${py}`);
+      rect(g, c, px, py, 1, 1);
+    };
+    const angles = [0.1, 0.55, 1.0, 1.45];
+    for (const a of angles) for (let t = 0; t < 17; t += 0.25) dot(Math.cos(a) * t, Math.sin(a) * t, 0xcfd0d8);
+    for (const r of [5.5, 10.5]) {
+      for (let i = 0; i < angles.length - 1; i++) {
+        for (let k = 0; k <= 12; k++) {
+          const a = angles[i] + ((angles[i + 1] - angles[i]) * k) / 12;
+          const sag = Math.sin((k / 12) * Math.PI) * 1.1;
+          dot(Math.cos(a) * (r - sag), Math.sin(a) * (r - sag), 0x9a98a8);
+        }
+      }
+    }
+    // a tiny spider
+    rect(g, 0x1a1214, 9, 9, 2, 2);
+    rect(g, 0x1a1214, 8, 8, 1, 1); rect(g, 0x1a1214, 11, 8, 1, 1); rect(g, 0x1a1214, 8, 11, 1, 1); rect(g, 0x1a1214, 11, 11, 1, 1);
   });
   make(scene, 'rat', (g) => {
     rect(g, 0x6e6a70, 5, 9, 6, 4);
@@ -1061,12 +1108,28 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0x3a2516, 3, 4, 1, 2);
     rect(g, 0x3a2516, 2, 5, 1, 1);
   });
-  make(scene, 'chute', (g) => {
-    rect(g, 0x2b2226, 3, 4, 10, 9);
-    rect(g, 0x5c5c66, 2, 3, 12, 2);
-    rect(g, 0x111014, 4, 6, 8, 6);
-    rect(g, 0x5c5c66, 4, 8, 8, 1);
-  });
+  // The coal chute: an iron hatch in a stone frame, a little coal spilled.
+  make(scene, 'chute', (g) => pixels(g, [
+      '................',
+      '..SSSSSSSSSSSS..',
+      '.SsKKKKKKKKKKsS.',
+      '.SKIIIIiIIIIIKS.',
+      '.SKIiIIiIIIiIKS.',
+      '.SKIIIIiIIIIIKS.',
+      '.SKIIIIiIIIIIKS.',
+      '.SKKKKKKKKKKKKS.',
+      '.SKBBBBBBBBBBKS.',
+      '.SKBBCBBBBCBBKS.',
+      '.SKBBBBCBBBBBKS.',
+      '.SKKKKKKKKKKKKS.',
+      '..SSSSSSSSSSSS..',
+      '...C..c...C.....',
+      '................',
+      '................',
+    ], {
+    S: 0x8a868c, s: 0xa8a4ae, K: 0x2a2630, I: 0x6e6a74, i: 0x9a96a0,
+    B: 0x111014, C: 0x3a3640, c: 0x5c5862,
+  }));
 
   // ── Town square ──────────────────────────────────────────
   make(scene, 'well', (g) => {
@@ -1090,16 +1153,29 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xb0b0b0, 7, 8, 2, 2);
     rect(g, 0x8e2b2b, 11, 8, 2, 2);
   });
-  make(scene, 'butcher', (g) => {
-    rect(g, 0x5a3a22, 1, 2, 1, 13);
-    rect(g, 0x5a3a22, 14, 2, 1, 13);
-    rect(g, 0x7a4b2a, 1, 2, 14, 1);
-    rect(g, 0xc76a5a, 4, 4, 4, 6);
-    rect(g, 0xe8b0a0, 5, 5, 2, 2);
-    rect(g, 0xe8e0c8, 5, 3, 2, 1);
-    rect(g, 0x8a5a3a, 9, 4, 3, 4);
-    rect(g, 0x7a4b2a, 0, 11, 16, 4);
-  });
+  // The butcher's stall: a striped awning, a big ham and a string of sausages.
+  make(scene, 'butcher', (g) => pixels(g, [
+      'RWRWRWRWRWRWRWRW',
+      'RWRWRWRWRWRWRWRW',
+      'dddddddddddddddd',
+      'P.....k.....k..P',
+      'P.....k.....k..P',
+      'P...hHHH...sS..P',
+      'P..HHhHHH..Ss..P',
+      'P..HHHHHH..sS..P',
+      'P..HHHHHH..Ss..P',
+      'P...HHHH...sS..P',
+      'P....BB........P',
+      'P....BB........P',
+      'CCCCCCCCCCCCCCCC',
+      'ccwccwccwccwccwc',
+      'cccccccccccccccc',
+      'cccccccccccccccc',
+    ], {
+    R: 0xc0392b, W: 0xf0e6d8, d: 0x5a3a22, P: 0x6b4426, k: 0x8a8a96,
+    H: 0xc76a5a, h: 0xe8a090, B: 0xf0ead6, s: 0xa8503e, S: 0x8e3b2e,
+    C: 0x9c6b40, c: 0x7a4b2a, w: 0x5a3a22,
+  }));
   make(scene, 'post', (g) => {
     rect(g, 0x5a3a22, 7, 2, 2, 14);
     rect(g, 0xf0ead6, 3, 3, 10, 7);
@@ -1121,18 +1197,47 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xf7dc6f, 6, 2, 4, 3);
     rect(g, 0x2b2226, 5, 5, 6, 1);
   });
-  make(scene, 'bench', (g) => {
-    rect(g, 0x7a4b2a, 1, 6, 14, 3);
-    rect(g, 0x9a6a3c, 1, 6, 14, 1);
-    rect(g, 0x5a3a22, 2, 9, 1, 5);
-    rect(g, 0x5a3a22, 13, 9, 1, 5);
-  });
-  make(scene, 'tree', (g) => {
-    rect(g, 0x5a3a22, 7, 10, 2, 6);
-    rect(g, 0x2e5a34, 2, 2, 12, 9);
-    rect(g, 0x3d7a46, 4, 1, 8, 4);
-    rect(g, 0x24482a, 3, 8, 10, 2);
-  });
+  // A wooden bench: slatted back, seat, legs.
+  make(scene, 'bench', (g) => pixels(g, [
+      '................',
+      '................',
+      '................',
+      '................',
+      '................',
+      '................',
+      '..KKKKKKKKKKKK..',
+      '..KLLLLLLLLLLK..',
+      '..KWWWWWWWWWWK..',
+      '..KK.KK..KK.KK..',
+      '.KKKKKKKKKKKKKK.',
+      '.KLLLLLLLLLLLLK.',
+      '.KWWWWWWWWWWWWK.',
+      '.KKKKKKKKKKKKKK.',
+      '..KwK......KwK..',
+      '..KwK......KwK..',
+    ], {
+    K: 0x3a2516, L: 0xa8744a, W: 0x8a5a33, w: 0x6b4426,
+  }));
+  make(scene, 'tree', (g) => pixels(g, [
+      '......DDDD......',
+      '....DDLLLLDD....',
+      '...DLLHHLLLLD...',
+      '..DLLHHLLLLLLD..',
+      '..DLLLLLLLMLLD..',
+      '.DMLLLLLMLLLLMD.',
+      '.DMMLLLMMMLLMMD.',
+      '.DMMMMMMMMMMMMD.',
+      '..DMMMMDMMMMMD..',
+      '..DDMMDTTDMMDD..',
+      '....DDDTtDDD....',
+      '.......Tt.......',
+      '.......Tt.......',
+      '......TTtt......',
+      '.....SSSSSS.....',
+      '................',
+    ], {
+    D: 0x1e3a24, M: 0x2e6436, L: 0x3f8048, H: 0x5c9e5a, T: 0x6b4426, t: 0x4a2e1a, S: 0x2a4a2e,
+  }));
 
   // ── Chapel ───────────────────────────────────────────────
   make(scene, 'altar', (g) => {
@@ -1242,19 +1347,65 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xe0b85a, 6, 5, 1, 5);
     rect(g, 0x8a6a20, 7, 11, 2, 1);
   });
-  make(scene, 'moth', (g) => {
-    const wing = 0x6a5a7a;
-    rect(g, wing, 0, 3, 7, 7);
-    rect(g, wing, 9, 3, 7, 7);
-    rect(g, 0x55486a, 1, 9, 5, 4);
-    rect(g, 0x55486a, 10, 9, 5, 4);
-    rect(g, 0xe8d0f0, 2, 5, 2, 2);
-    rect(g, 0xe8d0f0, 12, 5, 2, 2);
-    rect(g, 0x1a1214, 3, 6, 1, 1);
-    rect(g, 0x1a1214, 12, 6, 1, 1);
-    rect(g, 0x3a3046, 7, 2, 2, 11);
-    rect(g, 0xc0a0d0, 6, 1, 1, 2);
-    rect(g, 0xc0a0d0, 9, 1, 1, 2);
+  // The Night Warden: a moth the size of a carriage, its wings covered in eyes.
+  // 5×3 tiles; the scene centres it on its tile and slowly flaps it.
+  makeSized(scene, 'moth', 80, 48, (g) => {
+    const cx = 39.5;
+    const wingBase = 0x6a5a7a, wingDark = 0x4a3e5a, wingEdge = 0x9a8aae, vein = 0x3a3046;
+    const inEllipse = (dx: number, y: number, ex: number, ey: number, rx: number, ry: number) =>
+      ((dx - ex) / rx) ** 2 + ((y - ey) / ry) ** 2;
+    for (let y = 0; y < 48; y++) {
+      for (let x = 0; x < 80; x++) {
+        const dx = Math.abs(x + 0.5 - cx - 0.5);
+        const fore = inEllipse(dx, y, 21, 15, 18, 10);
+        const hind = inEllipse(dx, y, 14, 31, 12, 11);
+        const v = Math.min(fore, hind);
+        if (v > 1 || dx < 3) continue;
+        let col = v > 0.82 ? wingEdge : (Math.floor(dx / 4) + Math.floor(y / 5)) % 3 === 0 ? wingDark : wingBase;
+        if (v > 0.96) col = vein;
+        // veins radiating from the body
+        if (fore <= 1 && Math.abs((y - 15) - (dx - 4) * -0.35) < 0.6 && dx > 5) col = vein;
+        if (hind <= 1 && fore > 1 && Math.abs((y - 28) - (dx - 4) * 0.45) < 0.6 && dx > 5) col = vein;
+        rect(g, col, x, y, 1, 1);
+      }
+    }
+    // Eye-spots on every wing: yellow rings, dark pupils, a glint.
+    const eye = (dx: number, y: number, r: number) => {
+      for (const side of [-1, 1]) {
+        const ex = cx + side * dx;
+        g.fillStyle(0x2a1a10, 1); g.fillCircle(ex, y, r + 1);
+        g.fillStyle(0xf1c40f, 1); g.fillCircle(ex, y, r);
+        g.fillStyle(0xe8742a, 1); g.fillCircle(ex, y, r * 0.7);
+        g.fillStyle(0x1a1214, 1); g.fillCircle(ex, y, r * 0.45);
+        rect(g, 0xfff4d0, Math.round(ex - r * 0.35), Math.round(y - r * 0.4), 1, 1);
+      }
+    };
+    eye(22, 14, 4.5);
+    eye(32, 10, 2.5);
+    eye(14, 31, 3.5);
+    // A furry, banded body.
+    for (let y = 9; y < 42; y++) {
+      const w = y < 20 ? 3 : Math.max(1, Math.round(3 - (y - 20) / 9));
+      rect(g, 0x2a2236, Math.round(cx - w - 0.5), y, w * 2 + 1, 1);
+      rect(g, y % 4 < 2 ? 0x5a4a6a : 0x3a3046, Math.round(cx - w + 0.5), y, w * 2 - 1, 1);
+    }
+    rect(g, 0x8a7a9a, 38, 11, 3, 1); rect(g, 0x8a7a9a, 37, 13, 5, 1);
+    // Head with two glowing red eyes.
+    rect(g, 0x2a2236, 36, 5, 8, 5);
+    rect(g, 0x3a3046, 37, 5, 6, 4);
+    rect(g, 0xe8484a, 37, 6, 2, 2); rect(g, 0xe8484a, 41, 6, 2, 2);
+    rect(g, 0xffb0a0, 37, 6, 1, 1); rect(g, 0xffb0a0, 41, 6, 1, 1);
+    // Feathery antennae.
+    for (let i = 0; i < 9; i++) {
+      for (const side of [-1, 1]) {
+        const ax = Math.round(cx + side * (2 + i * 1.3));
+        const ay = 5 - Math.round(i * 0.55);
+        rect(g, 0x8a7a9a, ax, ay, 1, 1);
+        if (i % 2 === 1) rect(g, 0x6a5a7a, ax, ay - 1, 1, 1);
+      }
+    }
+    // A little glittering dust.
+    for (const [x, y] of [[8, 22], [70, 25], [15, 40], [64, 41], [27, 44], [52, 4]]) rect(g, 0xf7dc6f, x, y, 1, 1);
   });
   make(scene, 'rope', (g) => {
     rect(g, 0xc8a870, 7, 0, 2, 14);
@@ -1447,28 +1598,69 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0x5c5862, 6, 6, 4, 1); rect(g, 0x5c5862, 6, 8, 3, 1); rect(g, 0x5c5862, 6, 10, 4, 1);
     rect(g, 0x3d7a46, 3, 14, 10, 2);
   });
-  make(scene, 'brokenCart', (g) => {
-    rect(g, 0x7a4b2a, 1, 6, 12, 5);
-    rect(g, 0x9a6a3c, 1, 6, 12, 1);
-    rect(g, 0x3a2516, 3, 11, 4, 4); rect(g, 0x5a3a22, 4, 12, 2, 2);
-    rect(g, 0x3a2516, 11, 13, 4, 2);
-    rect(g, 0x5a3a22, 12, 4, 3, 2);
-    rect(g, 0xd9b45a, 3, 4, 6, 2);
-  });
-  make(scene, 'hay', (g) => {
-    rect(g, 0xc8a050, 2, 5, 12, 9);
-    rect(g, 0xe0c070, 2, 5, 12, 2);
-    rect(g, 0x9a7a3a, 2, 9, 12, 1);
-    rect(g, 0xe0c070, 4, 3, 2, 2); rect(g, 0xe0c070, 10, 4, 1, 2);
-  });
-  make(scene, 'horse', (g) => {
-    rect(g, 0x7a4b2a, 2, 6, 10, 6);
-    rect(g, 0x7a4b2a, 11, 3, 3, 6);
-    rect(g, 0x5a3a22, 12, 2, 2, 2);
-    rect(g, 0x3a2516, 2, 6, 2, 3);
-    rect(g, 0x5a3a22, 3, 12, 1, 4); rect(g, 0x5a3a22, 10, 12, 1, 4);
-    rect(g, 0x1a1214, 12, 5, 1, 1);
-  });
+  // A broken cart: one good wheel, the other fallen off, a loose plank sticking up.
+  make(scene, 'brokenCart', (g) => pixels(g, [
+      '................',
+      '.........PP.....',
+      '........PPK.....',
+      '.......PPK......',
+      'KKKKKKPPKKKKK...',
+      'KLLLLPPLLLLLK...',
+      'KWWWWWWWWWWWK...',
+      'KwWwWwWwWwWwK...',
+      'KWWWWWWWWWWWKKKK',
+      'KKKKKKKKKKKKK..K',
+      '..KRRRK.........',
+      '.KRSHSRK..KRRK..',
+      '.KRHHHRK.KRSSRK.',
+      '.KRSHSRK..KRRK..',
+      '..KRRRK.........',
+      '................',
+    ], {
+    K: 0x2a1a10, W: 0x8a5a33, w: 0x6b4426, L: 0xa8744a, P: 0xc49a6c,
+    R: 0x5a3a22, S: 0x9a6a3c, H: 0x3a2516,
+  }));
+  // A hay bale: straw texture, two twine bands, a few stray straws.
+  make(scene, 'hay', (g) => pixels(g, [
+      '................',
+      '................',
+      '................',
+      '................',
+      '..KKKKKKKKKKKK..',
+      '.KYYyYYYyYYYYYK.',
+      '.KYyYYYyYYYyYYK.',
+      '.KTTTTTTTTTTTTK.',
+      '.KYYYyYYYYyYYYK.',
+      '.KyYYYYyYYYYyYK.',
+      '.KYYYYYYYYYYYYK.',
+      '.KTTTTTTTTTTTTK.',
+      '.KyyyyyyyyyyyyK.',
+      '..KKKKKKKKKKKK..',
+      '.y..y......y..y.',
+      '................',
+    ], {
+    K: 0x6a4a1a, Y: 0xe8c85a, y: 0xc8a240, T: 0x8a5a33,
+  }));
+  make(scene, 'horse', (g) => pixels(g, [
+      '................',
+      '...........KK...',
+      '..........KMBK..',
+      '..........MBBBK.',
+      '.........MMBEBBK',
+      '.........MBBBBBK',
+      '.........MBBKKK.',
+      '..KKKKKKKMBBK...',
+      '.KBBBBBBBBBBK...',
+      'MKBlllllBBBBK...',
+      'MKBBBBBBBBBBK...',
+      'M.KBBBBBBBBK....',
+      '..KBK.....KBK...',
+      '..KBK.....KBK...',
+      '..KBK.....KBK...',
+      '..KHK.....KHK...',
+    ], {
+    K: 0x2a1a10, B: 0x8a5a33, l: 0xa8744a, M: 0x3a2516, E: 0x1a1214, H: 0x1a1214,
+  }));
   // The town's main gate: two halves of a heavy barred gate.
   const townGate = (left: boolean) => (g: G): void => {
     rect(g, 0x3a2a20, 0, 0, 16, 16);
@@ -1501,13 +1693,26 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xf39c12, 12, 7, 1, 1);
     rect(g, 0xf39c12, 6, 13, 1, 2); rect(g, 0xf39c12, 9, 13, 1, 2);
   });
-  make(scene, 'dog', (g) => {
-    rect(g, 0xb07a4a, 3, 9, 10, 5);
-    rect(g, 0xb07a4a, 11, 7, 4, 4);
-    rect(g, 0x7a4b2a, 11, 7, 1, 3);
-    rect(g, 0x1a1214, 13, 9, 2, 1);
-    rect(g, 0xb07a4a, 1, 11, 3, 1);
-  });
+  make(scene, 'dog', (g) => pixels(g, [
+      '................',
+      '................',
+      '................',
+      '................',
+      '................',
+      '..........KK....',
+      '.........KbbK...',
+      '.........KBBBKK.',
+      '.........KBEBBBK',
+      '..K......KBBBBNK',
+      '.KbKKKKKKKBBBlK.',
+      '.KBBBBBBBBBBlK..',
+      'KbBlllllBBBBBK..',
+      '.KBBBBBBBBBBBK..',
+      '..KBKKBK.KBKBK..',
+      '...K..K...K.K...',
+    ], {
+    K: 0x2a1a10, B: 0xb07a4a, b: 0x7a4b2a, l: 0xd09a64, E: 0x1a1214, N: 0x1a1214,
+  }));
   make(scene, 'outhouse', (g) => {
     rect(g, 0x7a4b2a, 3, 3, 10, 13);
     rect(g, 0x5a3a22, 2, 1, 12, 3);
@@ -1724,12 +1929,20 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0xa8d0f0, 4, 14, 1, 2); rect(g, 0xa8d0f0, 12, 13, 1, 2);
   });
   // Millstones: two great round stones, one on the other.
+  // A millstone: dressed with grinding furrows, a spindle in the middle, flour about.
   make(scene, 'millstone', (g) => {
-    g.fillStyle(0x4a464e, 1); g.fillCircle(8, 9, 7);
-    g.fillStyle(0x8a868c, 1); g.fillCircle(8, 8, 6);
-    g.fillStyle(0x9a96a0, 1); g.fillCircle(7, 7, 4);
-    rect(g, 0x3a3640, 7, 7, 2, 2);
-    rect(g, 0xe8e0d0, 3, 12, 3, 1); rect(g, 0xe8e0d0, 11, 13, 2, 1);
+    g.fillStyle(0x3a3640, 1); g.fillCircle(8, 9, 7.5);
+    g.fillStyle(0x8a868c, 1); g.fillCircle(8, 8.5, 6.8);
+    g.fillStyle(0x9a96a0, 1); g.fillCircle(7.3, 7.8, 5);
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.3;
+      for (let t = 2.2; t < 6.4; t += 0.6) {
+        rect(g, 0x5c5862, Math.round(8 + Math.cos(a) * t + Math.sin(a) * (t - 2) * 0.35 - 0.5), Math.round(8.5 + Math.sin(a) * t - Math.cos(a) * (t - 2) * 0.35 - 0.5), 1, 1);
+      }
+    }
+    g.fillStyle(0x2a2630, 1); g.fillCircle(8, 8.5, 1.8);
+    rect(g, 0x7a4b2a, 7, 7, 2, 3);
+    for (const [x, y] of [[1, 14], [3, 15], [13, 14], [14, 12], [2, 3], [12, 15]]) rect(g, 0xe8e0d0, x, y, 1, 1);
   });
   // A goose. Wide awake. Hostile.
   make(scene, 'goose', (g) => {
@@ -1805,14 +2018,28 @@ export function makeTextures(scene: Phaser.Scene): void {
     rect(g, 0x3a2516, 2, 14, 5, 2); rect(g, 0x3a2516, 11, 15, 4, 1);
   });
   // The town clock's works, jammed with silk.
+  // Clockwork: two brass cogs, meshed.
   make(scene, 'gears', (g) => {
-    const gear = (cx: number, cy: number, r: number, c: number) => {
-      g.fillStyle(c, 1); g.fillCircle(cx, cy, r);
-      g.fillStyle(0x2a2630, 1); g.fillCircle(cx, cy, Math.max(1, r - 3));
-      g.fillStyle(c, 1); g.fillCircle(cx, cy, 1);
+    const cog = (cx: number, cy: number, r: number, teeth: number, phase: number) => {
+      for (let i = 0; i < teeth; i++) {
+        const a = phase + (i / teeth) * Math.PI * 2;
+        const tx = Math.round(cx + Math.cos(a) * (r + 0.5) - 1);
+        const ty = Math.round(cy + Math.sin(a) * (r + 0.5) - 1);
+        rect(g, 0x5a4210, tx, ty, 3, 3);
+        rect(g, 0xb8892c, tx + 1, ty + 1, 1, 1);
+      }
+      // (Radii are clamped: a negative one throws and stops every texture loading.)
+      const circle = (x: number, y: number, rad: number, col: number) => {
+        g.fillStyle(col, 1); g.fillCircle(x, y, Math.max(0.5, rad));
+      };
+      circle(cx, cy, r + 0.5, 0x5a4210);
+      circle(cx, cy, r - 0.5, 0xb8892c);
+      circle(cx - 0.8, cy - 0.8, r - 2, 0xd4a840);
+      circle(cx, cy, r - 2.6, 0xb8892c);
+      circle(cx, cy, Math.max(1, r * 0.3), 0x3a2a10);
     };
-    gear(5, 6, 5, 0xb8892c); gear(11, 10, 4, 0x8a8a96); gear(4, 13, 3, 0xb8892c);
-    rect(g, 0xe8e4f0, 1, 8, 14, 1); rect(g, 0xe8e4f0, 6, 2, 1, 12);
+    cog(6.5, 10, 4, 9, 0);
+    cog(12, 4.5, 2.5, 7, 0.3);
   });
   make(scene, 'forge', (g) => {
     rect(g, 0x5c5862, 1, 2, 14, 14);
